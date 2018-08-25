@@ -16,8 +16,13 @@ import java.io.IOException;
 @Component
 public class MyFilter implements Filter {
 
+    private String destinationBaseUrl;
+
+    public void setDestinationBaseUrl(String destinationBaseUrl) {
+        this.destinationBaseUrl = destinationBaseUrl;
+    }
+
     private Logger logger = LoggerFactory.getLogger(MyFilter.class);
-    private static final String destUrl = "http://192.168.1.2:7001";
 
     @Override
     public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain) throws ServletException, IOException {
@@ -26,14 +31,24 @@ public class MyFilter implements Filter {
         HttpServletRequest httpServletRequest = (HttpServletRequest) req;
         HttpServletResponse httpServletResponse = (HttpServletResponse) resp;
         String uri = httpServletRequest.getRequestURI();
-
+        HttpUtil httpUtil = new HttpUtil();
         logRequestDetail(httpServletRequest);
 
         if(uri.contains("/ARASpringTest")){
-            //ResponseEntity<String> responseEntity = performRestCall(destUrl+uri);
-            ResponseEntity<String> responseEntity = performRestCallExchange(destUrl+uri);
+            ApiForwardingUtil apiForwardingUtil = new ApiForwardingUtil();
+            apiForwardingUtil.setDestinationUrl(destinationBaseUrl);
+            apiForwardingUtil.setReq(httpServletRequest);
+
+            ResponseEntity<String> responseEntity = null;
+            try {
+                responseEntity = httpUtil.performRestCallExchange(apiForwardingUtil);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
             httpServletResponse.setStatus(HttpStatus.OK.value());
-            httpServletResponse.getWriter().write(convertObjectToJson(responseEntity.getBody())); //TODO STILL ERROR SHOW TO CLIENT
+            httpServletResponse.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            httpServletResponse.getWriter().write(responseEntity.getBody());
         }
         else{
             chain.doFilter(req, resp);

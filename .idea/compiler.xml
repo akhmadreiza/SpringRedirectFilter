@@ -9,5 +9,8 @@
         <module name="simplerestapi" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="simplerestapi" target="1.8" />
+    </bytecodeTargetLevel>
   </component>
 </project>
